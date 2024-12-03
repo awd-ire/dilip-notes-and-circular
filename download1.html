@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Circulars</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Available Circulars</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Circular Title</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="circularsTable">
+                <!-- Circulars will be dynamically populated -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const baseURL = 'http://localhost:3000';
+
+        // Fetch and display circulars
+        fetch(`${baseURL}/circulars`)
+            .then(response => response.json())
+            .then(data => {
+                const circularsTable = document.getElementById('circularsTable');
+
+                data.forEach((circular, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${circular.circular_title}</td>
+                        <td>
+                            <button onclick="downloadCircular(${circular.circular_id})">Download</button>
+                        </td>
+                    `;
+                    circularsTable.appendChild(row);
+                });
+            })
+            .catch(err => {
+                console.error('Error fetching circulars:', err);
+                alert('Failed to load circulars. Please try again.');
+            });
+
+        // Download circular
+        function downloadCircular(id) {
+            const url = `${baseURL}/download-circular/${id}`;
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>

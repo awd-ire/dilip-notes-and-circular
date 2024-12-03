@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Circular</title>
+    <link rel="stylesheet" href="style1.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Circular</h1>
+        <form id="uploadForm" action="http://localhost:3000/upload-circular" method="POST" enctype="multipart/form-data">
+            <label for="circular_title">Circular Title:</label>
+            <input type="text" name="circular_title" id="circular_title" placeholder="Enter the circular title" required>
+
+            <label for="circular_file">Upload File:</label>
+            <input type="file" name="circular_file" id="circular_file" accept=".pdf,.doc,.docx,.txt" required>
+
+            <button type="submit">Upload</button>
+        </form>
+
+        <h2>Uploaded Circulars</h2>
+        <div id="circularsContainer" style="overflow-y: auto; max-height: 300px;">
+            <table id="circularsTable">
+                <thead>
+                    <tr>
+                        <th>Circular Title</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Circulars will be dynamically populated here -->
+                </tbody>
+            </table>
+        </div>
+        <p id="responseMessage" style="color: green;"></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const circularsTable = document.getElementById('circularsTable').querySelector('tbody');
+        const responseMessage = document.getElementById('responseMessage');
+        const circularsContainer = document.getElementById('circularsContainer');
+
+        // Fetch and display circulars
+        async function fetchCirculars() {
+            try {
+                const response = await fetch('http://localhost:3000/circulars');
+                const circulars = await response.json();
+                circularsTable.innerHTML = ''; // Clear existing rows
+
+                circulars.forEach(circular => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${circular.circular_title}</td>
+                        <td>
+                            <button onclick="deleteCircular(${circular.circular_id})" class="delete-btn">Delete</button>
+                            <button onclick="downloadCircular(${circular.circular_id})">Download</button>
+                        </td>
+                    `;
+                    circularsTable.appendChild(row);
+                });
+
+                // Scroll to the bottom of the circulars container
+                circularsContainer.scrollTop = circularsContainer.scrollHeight;
+            } catch (error) {
+                console.error('Error fetching circulars:', error);
+            }
+        }
+
+        // Delete a circular
+        async function deleteCircular(id) {
+            if (!confirm('Are you sure you want to delete this circular?')) return;
+
+            try {
+                const response = await fetch(`http://localhost:3000/circulars/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    responseMessage.style.color = 'green';
+                    responseMessage.textContent = 'Circular deleted successfully!';
+                    fetchCirculars(); // Refresh the circular list
+                } else {
+                    const error = await response.text();
+                    responseMessage.style.color = 'red';
+                    responseMessage.textContent = `Error: ${error}`;
+                }
+            } catch (err) {
+                console.error(err);
+                responseMessage.style.color = 'red';
+                responseMessage.textContent = 'An error occurred. Please try again.';
+            }
+        }
+
+        // Download circular
+        function downloadCircular(id) {
+            const url = `http://localhost:3000/download-circular/${id}`;
+            window.location.href = url;
+        }
+
+        // Handle file upload
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    responseMessage.style.color = 'green';
+                    responseMessage.textContent = 'Circular uploaded successfully!';
+                    form.reset();
+                    fetchCirculars(); // Refresh the circular list
+                } else {
+                    const error = await response.text();
+                    responseMessage.style.color = 'red';
+                    responseMessage.textContent = `Error: ${error}`;
+                }
+            } catch (err) {
+                console.error(err);
+                responseMessage.style.color = 'red';
+                responseMessage.textContent = 'An error occurred. Please try again.';
+            }
+        });
+
+        // Fetch circulars on page load
+        fetchCirculars();
+    </script>
+</body>
+</html>
